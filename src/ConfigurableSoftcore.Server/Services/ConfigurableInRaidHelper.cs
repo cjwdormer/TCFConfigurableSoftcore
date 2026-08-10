@@ -69,6 +69,17 @@ public class ConfigurableInRaidHelper : InRaidHelper
             var protectedIds = ApplyMode(mode, serverProfile, postRaidProfile);
             _restoreState.MarkProtected(sessionId.ToString(), protectedIds);
 
+            if (cfg.StripInsuranceForKeptItems)
+            {
+                var unInsured = StripInsuranceForProtectedItems(serverProfile, protectedIds);
+                if (cfg.Debug && unInsured > 0)
+                {
+                    _logger.Debug(
+                        $"[ConfigurableSoftcore] {sessionId}: removed {unInsured} kept item(s) from " +
+                        $"InsuredItems to prevent an insurance-return duplicate.");
+                }
+            }
+
             _logger.Info(
                 $"[ConfigurableSoftcore] {sessionId} died on {(map ?? "unknown map")}: mode={mode}, " +
                 $"kept {protectedIds.Count} item(s).");
@@ -132,6 +143,14 @@ public class ConfigurableInRaidHelper : InRaidHelper
             $"falling through to SPT's normal death processing, all equipment will be lost.");
 
         base.DeleteInventory(pmcData, sessionId);
+    }
+
+    private static int StripInsuranceForProtectedItems(PmcData serverProfile, HashSet<string> protectedIds)
+    {
+        var insured = serverProfile.InsuredItems;
+        if (insured is null || insured.Count == 0 || protectedIds.Count == 0) return 0;
+
+        return insured.RemoveAll(i => protectedIds.Contains(i.ItemId.ToString()));
     }
 
     private HashSet<string> ApplyMode(RestoreMode mode, PmcData serverProfile, PmcData postRaidProfile)
