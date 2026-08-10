@@ -19,6 +19,10 @@ public sealed class SoftcoreConfig
     /// popup/sound) summarising what this mod kept whenever it actively restores gear.</summary>
     public bool NotifyPlayer { get; set; } = true;
 
+    /// <summary>Remove kept items from the profile's InsuredItems list so insurance doesn't also
+    /// mail back a duplicate of anything this mod already restored.</summary>
+    public bool StripInsuranceForKeptItems { get; set; } = true;
+
     /// <summary>Mode used for any profile not listed in <see cref="ProfileOverrides"/>, and for
     /// any map a listed profile's rule doesn't cover.</summary>
     public RestoreMode DefaultMode { get; set; } = RestoreMode.Vanilla;
