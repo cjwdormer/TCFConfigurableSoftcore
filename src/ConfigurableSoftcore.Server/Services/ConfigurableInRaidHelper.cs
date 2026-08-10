@@ -71,12 +71,21 @@ public class ConfigurableInRaidHelper : InRaidHelper
 
             if (cfg.StripInsuranceForKeptItems)
             {
-                var unInsured = StripInsuranceForProtectedItems(serverProfile, protectedIds);
-                if (cfg.Debug && unInsured > 0)
+                try
                 {
-                    _logger.Debug(
-                        $"[ConfigurableSoftcore] {sessionId}: removed {unInsured} kept item(s) from " +
-                        $"InsuredItems to prevent an insurance-return duplicate.");
+                    var unInsured = StripInsuranceForProtectedItems(serverProfile, protectedIds);
+                    if (cfg.Debug && unInsured > 0)
+                    {
+                        _logger.Debug(
+                            $"[ConfigurableSoftcore] {sessionId}: removed {unInsured} kept item(s) from " +
+                            $"InsuredItems to prevent an insurance-return duplicate.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(
+                        $"[ConfigurableSoftcore] {sessionId}: StripInsuranceForKeptItems failed, continuing " +
+                        $"without it - kept items may also be returned via insurance this raid. {ex}");
                 }
             }
 
@@ -150,7 +159,11 @@ public class ConfigurableInRaidHelper : InRaidHelper
         var insured = serverProfile.InsuredItems;
         if (insured is null || insured.Count == 0 || protectedIds.Count == 0) return 0;
 
-        return insured.RemoveAll(i => protectedIds.Contains(i.ItemId.ToString()));
+        return insured.RemoveAll(i =>
+        {
+            var id = i.ItemId.ToString();
+            return !string.IsNullOrEmpty(id) && protectedIds.Contains(id);
+        });
     }
 
     private HashSet<string> ApplyMode(RestoreMode mode, PmcData serverProfile, PmcData postRaidProfile)
@@ -207,6 +220,64 @@ public class ConfigurableInRaidHelper : InRaidHelper
             {
                 // KeepGearOnly + container slot: keep the container itself, leave its
                 // contents to normal death processing.
+                protectedIds.Add(slotItem.Id);
+            }
+        }
+
+        return protectedIds;
+    }
+
+    /// <summary>
+    /// Read-only mirror of <see cref="ApplyMode"/>'s id-selection logic, used by
+    /// ConfigurableLocationLifecycleService to know which items will be protected before
+    /// SetInventory actually runs - so it can strip them out of the raid-end request's
+    /// LostInsuredItems before SPT's InsuranceService ever tries to look them up. Unlike
+    /// ApplyMode, this never mutates postRaidProfile/exitItems.
+    /// </summary>
+    internal static HashSet<string> PredictProtectedIds(RestoreMode mode, PmcData serverProfile, PmcData postRaidProfile)
+    {
+        var protectedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        var entryItems = serverProfile.Inventory?.Items;
+        var exitItems = postRaidProfile.Inventory?.Items;
+        if (entryItems is null || exitItems is null) return protectedIds;
+
+        var equipmentRootId = EquipmentGraph.FindEquipmentRootId(serverProfile.Inventory);
+        if (equipmentRootId is null) return protectedIds;
+
+        var entryChildren = EquipmentGraph.BuildChildrenByParent(entryItems);
+
+        ProtectAlwaysKeptSlots(equipmentRootId, exitItems, protectedIds);
+
+        if (mode == RestoreMode.KeepEverything)
+        {
+            foreach (var id in EquipmentGraph.CollectSubtreeIds(equipmentRootId, entryChildren))
+                protectedIds.Add(id);
+
+            var exitChildren = EquipmentGraph.BuildChildrenByParent(exitItems);
+            foreach (var id in EquipmentGraph.CollectSubtreeIds(equipmentRootId, exitChildren))
+                protectedIds.Add(id);
+
+            return protectedIds;
+        }
+
+        if (!entryChildren.TryGetValue(equipmentRootId, out var slotItems)) return protectedIds;
+
+        foreach (var slotItem in slotItems)
+        {
+            if (string.IsNullOrEmpty(slotItem.Id)) continue;
+            if (!string.IsNullOrEmpty(slotItem.SlotId) && EquipmentGraph.AlwaysKeptSlots.Contains(slotItem.SlotId))
+                continue;
+
+            var isContainer = !string.IsNullOrEmpty(slotItem.SlotId) && EquipmentGraph.ContainerSlots.Contains(slotItem.SlotId);
+
+            if (!isContainer || mode == RestoreMode.KeepEntryItems)
+            {
+                foreach (var id in EquipmentGraph.CollectSubtreeIds(slotItem.Id, entryChildren))
+                    protectedIds.Add(id);
+            }
+            else
+            {
                 protectedIds.Add(slotItem.Id);
             }
         }
