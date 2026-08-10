@@ -1,4 +1,4 @@
-# TCFConfigurableSoftcore# Configurable Softcore
+## TCFConfigurableSoftcore Configurable Softcore
 
 Configurable death-loss rules for SPT. Overrides `InRaidHelper` so raid-end restoration
 happens before the normal death penalty runs, instead of guessing at raid state from
