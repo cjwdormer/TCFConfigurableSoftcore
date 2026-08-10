@@ -87,9 +87,3 @@ notification state) plus map-capture logging from `ConfigurableLocationLifecycle
 
 - Doesn't exclude insured items, so there may be interaction with insurance payouts on items
   this mod restores (regardless of the `PreserveFoundInRaid` setting).
-
----
-
-## Building
-
-Open `TCFConfigurableSoftcore.sln` and build. NuGet restores from `build/NuGet.config`.
