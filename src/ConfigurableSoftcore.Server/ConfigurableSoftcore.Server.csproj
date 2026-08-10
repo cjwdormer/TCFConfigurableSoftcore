@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>ConfigurableSoftcore.Server</RootNamespace>
+    <AssemblyName>ConfigurableSoftcore.Server</AssemblyName>
+    <OutputPath>bin\$(Configuration)\$(AssemblyName)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SPTarkov.Common" Version="4.0.13" ExcludeAssets="runtime" />
+    <PackageReference Include="SPTarkov.DI" Version="4.0.13" ExcludeAssets="runtime" />
+    <PackageReference Include="SPTarkov.Server.Core" Version="4.0.13" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+</Project>
