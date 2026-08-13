@@ -57,6 +57,13 @@ summarising the mode and how many items were kept. There's no client mod, so thi
 message via `MailSendService.SendSystemMessageToPlayer` - is the closest thing to a toast
 notification a server-only mod can send. Set `false` to go back to silent.
 
+`StripInsuranceForKeptItems` (default `true`): removes kept items from the profile's
+`InsuredItems` list so insurance doesn't also mail back a duplicate of anything this mod
+already restored. Applied both ahead of raid-end insurance processing (predicted keep-list,
+to avoid a noisy but harmless "unable to find insurance details" log per item) and again as a
+fallback when gear is actually restored. Set `false` to let insurance process kept items
+normally (risking a duplicate return).
+
 ---
 
 ## How it works
@@ -85,5 +92,5 @@ notification state) plus map-capture logging from `ConfigurableLocationLifecycle
 
 ## Known limitations (v1)
 
-- Doesn't exclude insured items, so there may be interaction with insurance payouts on items
-  this mod restores (regardless of the `PreserveFoundInRaid` setting).
+- None currently tracked. Insurance interaction on kept items is handled by
+  `StripInsuranceForKeptItems` (default `true`) - see above.
