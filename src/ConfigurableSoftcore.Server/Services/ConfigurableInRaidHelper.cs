@@ -1,4 +1,4 @@
-using SPTarkov.Server.Core.Helpers;
+﻿using SPTarkov.Server.Core.Helpers;
 using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
@@ -218,9 +218,10 @@ public class ConfigurableInRaidHelper : InRaidHelper
             }
             else
             {
-                // KeepGearOnly + container slot: keep the container itself, leave its
-                // contents to normal death processing.
+                // KeepGearOnly + container slot: keep the container itself and any armour
+                // fitted to it, leave its stored contents to normal death processing.
                 protectedIds.Add(slotItem.Id);
+                RestoreArmorComponents(slotItem.Id, entryChildren, entryById, exitItems, protectedIds);
             }
         }
 
@@ -279,6 +280,7 @@ public class ConfigurableInRaidHelper : InRaidHelper
             else
             {
                 protectedIds.Add(slotItem.Id);
+                CollectArmorComponentIds(slotItem.Id, entryChildren, protectedIds);
             }
         }
 
@@ -296,6 +298,40 @@ public class ConfigurableInRaidHelper : InRaidHelper
             if (!EquipmentGraph.AlwaysKeptSlots.Contains(slotItem.SlotId)) continue;
 
             foreach (var id in EquipmentGraph.CollectSubtreeIds(slotItem.Id, exitChildren))
+                protectedIds.Add(id);
+        }
+    }
+
+    /// <summary>Restores the armour fitted into a container-slot item's own armour slots
+    /// (plates, soft inserts, collar, shoulders) without touching its stored contents.</summary>
+    private void RestoreArmorComponents(string containerId, Dictionary<string, List<Item>> entryChildren,
+        Dictionary<string, Item> entryById, List<Item> exitItems, HashSet<string> protectedIds)
+    {
+        if (!entryChildren.TryGetValue(containerId, out var children)) return;
+
+        foreach (var child in children)
+        {
+            if (string.IsNullOrEmpty(child.Id) || string.IsNullOrEmpty(child.SlotId)) continue;
+            if (!EquipmentGraph.ArmorComponentSlots.Contains(child.SlotId)) continue;
+
+            RestoreSubtree(EquipmentGraph.CollectSubtreeIds(child.Id, entryChildren),
+                entryById, exitItems, protectedIds);
+        }
+    }
+
+    /// <summary>Read-only mirror of <see cref="RestoreArmorComponents"/> for
+    /// <see cref="PredictProtectedIds"/>.</summary>
+    private static void CollectArmorComponentIds(string containerId,
+        Dictionary<string, List<Item>> entryChildren, HashSet<string> protectedIds)
+    {
+        if (!entryChildren.TryGetValue(containerId, out var children)) return;
+
+        foreach (var child in children)
+        {
+            if (string.IsNullOrEmpty(child.Id) || string.IsNullOrEmpty(child.SlotId)) continue;
+            if (!EquipmentGraph.ArmorComponentSlots.Contains(child.SlotId)) continue;
+
+            foreach (var id in EquipmentGraph.CollectSubtreeIds(child.Id, entryChildren))
                 protectedIds.Add(id);
         }
     }

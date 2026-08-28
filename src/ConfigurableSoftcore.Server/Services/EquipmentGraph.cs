@@ -1,4 +1,4 @@
-using SPTarkov.Server.Core.Models.Eft.Common.Tables;
+﻿using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 
 namespace ConfigurableSoftcore.Server.Services;
 
@@ -14,6 +14,15 @@ internal static class EquipmentGraph
     /// <summary>Slots normal Tarkov never loses on death, independent of any restore mode.</summary>
     public static readonly HashSet<string> AlwaysKeptSlots =
         new(StringComparer.OrdinalIgnoreCase) { "SecuredContainer", "Scabbard" };
+
+    /// <summary>Slots on a container-slot item that hold armour components rather than loot.</summary>
+    public static readonly HashSet<string> ArmorComponentSlots =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Front_plate", "Back_plate", "Left_side_plate", "Right_side_plate",
+            "Soft_armor_front", "Soft_armor_back", "Soft_armor_left", "Soft_armor_right",
+            "Collar", "Shoulder_l", "Shoulder_r", "Groin", "Groin_back"
+        };
 
     public static string? FindEquipmentRootId(BotBaseInventory? inventory)
     {

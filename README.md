@@ -14,7 +14,7 @@ Built for **SPT 4.0.13**.
 |---|---|
 | `Vanilla` | SPT default - lose all equipment on death |
 | `KeepEverything` | Nothing is lost on death |
-| `KeepGearOnly` | Keep the gear entered with (weapons, armor, pockets/rig/backpack as containers); contents of pockets/rig/backpack are always lost |
+| `KeepGearOnly` | Keep the gear entered with (weapons, armor, pockets/rig/backpack as containers, plus any plates and soft armour fitted to an armoured rig); contents of pockets/rig/backpack are always lost |
 | `KeepEntryItems` | Keep everything entered with, including pockets/rig/backpack contents; only items picked up during the raid are lost |
 
 `SecuredContainer` and `Scabbard` are always preserved, matching normal Tarkov rules,
